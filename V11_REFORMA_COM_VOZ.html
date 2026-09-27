@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Planejador de Reforma V11 • voz, texto livre ou toque</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#f4f7f5;color:#183329}
+main{max-width:720px;margin:auto;padding:18px 14px 40px}.brand{font-weight:800;font-size:22px;margin-bottom:4px}.sub{color:#65746d;font-size:14px;margin-bottom:16px}
+.card{background:#fff;border:1px solid #d9e4dd;border-radius:18px;padding:18px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.bot{font-size:18px;line-height:1.45}.choices{display:grid;gap:10px;margin-top:14px}.choices.two{grid-template-columns:1fr 1fr}
+button{width:100%;padding:15px 12px;border:0;border-radius:14px;font-size:17px;font-weight:700;background:#17734b;color:white}
+button.alt{background:#eef7f2;color:#174c37;border:1px solid #cae0d3}.back{background:#fff;color:#17734b;border:1px solid #17734b}
+input{width:100%;padding:14px;border:1px solid #cbd8d1;border-radius:12px;font-size:17px;margin:5px 0 8px}
+.step{font-size:13px;color:#67776f;margin-bottom:8px}.result{font-size:17px}.big{font-size:30px;font-weight:800;margin:8px 0}.hidden{display:none}.pill{display:inline-block;background:#eaf5ef;border-radius:99px;padding:7px 10px;font-size:13px;font-weight:700}
+.notice{margin-top:12px;background:#fff4dc;border-radius:12px;padding:12px;font-size:13px;line-height:1.45}
+@media(max-width:520px){.choices.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<div class="brand">Planejador de Reforma • V8</div>
+<div class="sub">Teste simples para cliente leigo • Chapecó/SC</div>
+
+<section id="s0" class="card">
+  <div class="step">Início</div>
+  <div class="bot"><b>Oi! Eu vou te ajudar a planejar sua reforma.</b><br>Você não precisa entender de obra. Eu vou perguntar uma coisa por vez.</div>
+  <div class="choices"><button onclick="startMode('voice')">🎙️ Quero falar por voz</button><button class="alt" onclick="startMode('touch')">✍️ Prefiro texto e toques</button></div>
+  <div class="notice">Você pode trocar de modo durante o planejamento. Para usar voz, autorize o microfone quando o navegador pedir.</div>
+</section>
+
+<section id="s1" class="card hidden">
+  <div class="step">1 de 6</div>
+  <div class="bot"><b>Onde será a reforma?</b></div>
+  <div class="choices"><button onclick="city='Chapecó/SC';go(2)">📍 Chapecó/SC</button><button class="alt" onclick="showCity()">Outra cidade</button></div>
+  <div id="cityBox" class="hidden"><input id="cityInput" placeholder="Digite a cidade"><button onclick="saveCity()">Continuar</button></div>
+</section>
+
+<section id="s2" class="card hidden">
+  <div class="step">2 de 6</div>
+  <div class="bot"><b>O que você quer reformar?</b></div>
+  <div class="choices"><button onclick="room='Banheiro';go(3)">🚿 Banheiro</button><button class="alt" disabled>🍳 Cozinha — em breve</button><button class="alt" disabled>🛋️ Sala — em breve</button></div>
+  <button class="back" onclick="go(1)">Voltar</button>
+</section>
+
+<section id="s3" class="card hidden">
+  <div class="step">3 de 6</div>
+  <div class="bot"><b>Você sabe as medidas do banheiro?</b><br>Se não souber, eu te ajudo.</div>
+  <div class="choices two"><button onclick="know=true;go(4)">Sei as medidas</button><button class="alt" onclick="know=false;go(31)">Não sei medir</button></div>
+  <button class="back" onclick="go(2)">Voltar</button>
+</section>
+
+<section id="s31" class="card hidden">
+  <div class="step">3 de 6 • ajuda</div>
+  <div class="bot"><b>Sem problema.</b><br>Escolha uma aproximação do tamanho do piso.</div>
+  <div class="choices"><button onclick="area=3;go(5)">Pequeno • cerca de 3 m²</button><button onclick="area=5;go(5)">Médio • cerca de 5 m²</button><button onclick="area=7;go(5)">Maior • cerca de 7 m²</button></div>
+  <button class="back" onclick="go(3)">Voltar</button>
+</section>
+
+<section id="s4" class="card hidden">
+  <div class="step">4 de 6</div>
+  <div class="bot"><b>Conte as medidas do seu jeito.</b><br>Você não precisa seguir uma ordem nem escrever com vírgula do jeito “certo”.</div>
+  <div class="notice">Exemplos: “A largura é um metro e meio, a altura é 2,50 e o comprimento é 3 metros e 20.”<br>Ou: “Meu banheiro tem 1,5 por 3,20 e 2,50 de altura.”</div>
+  <label for="dimFree">Fale pelo microfone abaixo ou escreva aqui</label><div class="notice"><b>No modo voz:</b> pode pensar e fazer pausas. A escuta continua por mais tempo e junta os trechos. Diga <b>“pronto”</b> quando terminar.</div>
+  <input id="dimFree" type="text" autocomplete="off" placeholder="Ex.: largura 1 metro e meio, comprimento 3,20, altura 2,50">
+  <button type="button" onclick="submitDimsFree()">Entender minhas medidas</button>
+  <button class="alt" type="button" onclick="know=false;go(31)">Não sei as medidas</button>
+  <button class="back" onclick="go(3)">Voltar</button>
+</section>
+
+<section id="s41" class="card hidden">
+  <div class="step">4 de 6 • confirmação</div>
+  <div class="bot"><b>Entendi suas medidas assim:</b><br>Confira abaixo. Você pode dizer “sim” ou corrigir falando naturalmente, por exemplo: “a altura é 2,60”.</div>
+  <div id="dimConfirm" class="notice"></div>
+  <div class="choices two"><button type="button" onclick="confirmDims()">Sim, está certo</button><button class="alt" type="button" onclick="go(4)">Corrigir</button></div>
+  <button class="back" onclick="go(4)">Voltar</button>
+</section>
+
+<section id="s5" class="card hidden">
+  <div class="step">5 de 6</div>
+  <div class="bot"><b>Qual tipo de reforma você quer?</b></div>
+  <div class="choices"><button onclick="scope='Completa';go(6)">Reforma completa</button><button class="alt" onclick="scope='Piso e paredes';go(6)">Piso e paredes</button><button class="alt" onclick="scope='Só acabamento';go(6)">Só acabamento</button></div>
+  <button class="back" onclick="know?go(4):go(31)">Voltar</button>
+</section>
+
+<section id="s6" class="card hidden">
+  <div class="step">6 de 6</div>
+  <div class="bot"><b>Qual padrão você imagina?</b></div>
+  <div class="choices"><button onclick="quality=.82;qname='Econômico';finish()">Econômico</button><button onclick="quality=1;qname='Padrão';finish()">Padrão</button><button onclick="quality=1.55;qname='Superior';finish()">Superior</button><button class="alt" onclick="quality=1;qname='Não sei';finish()">Não sei</button></div>
+  <button class="back" onclick="go(5)">Voltar</button>
+</section>
+
+<section id="s7" class="card hidden">
+  <div class="step">Resultado</div>
+  <div class="result">Estimativa inicial para <b id="rCity"></b></div>
+  <div class="big" id="rTotal"></div>
+  <div class="pill" id="rConf"></div>
+  <div class="notice" id="rExplain"></div>
+  <div class="choices">
+    <button onclick="alert('Nesta próxima etapa, a IA vai explicar o orçamento em linguagem simples.')">Entender melhor esse orçamento</button>
+    <button class="alt" onclick="alert('Aqui o cliente poderá informar ou enviar uma proposta para análise.')">Conferir uma proposta que recebi</button>
+    <button class="alt" onclick="alert('Aqui será preparada a solicitação para um profissional.')">Pedir orçamento a um profissional</button>
+  </div>
+  <button class="back" onclick="resetAll()">Começar de novo</button>
+</section>
+<div id="assist" class="card hidden" aria-live="polite">
+ <div class="bot" id="promptText"></div>
+ <div id="voiceStatus" class="notice hidden" role="status"></div>
+ <div id="micHelp" class="notice hidden"><b>Como liberar a voz no iPad:</b> abra esta página diretamente no Safari, toque em “Tentar microfone novamente” e, se o Safari pedir acesso, escolha “Permitir”. Se você já negou, confira Ajustes → Safari → Microfone e escolha “Perguntar” ou “Permitir”. Em arquivos baixados, a voz pode não funcionar; nesse caso, abra o planejador por um endereço HTTPS. Você pode continuar por texto e toques.<div class="choices"><button type="button" onclick="listen()">🎙️ Tentar microfone novamente</button></div></div>
+ <div class="choices two"><button id="listenBtn" type="button" onclick="listen()">🎙️ Falar resposta</button><button class="alt" type="button" onclick="toggleMode()" id="modeBtn">Usar texto e toques</button></div>
+ <label for="typedAnswer">Ou escreva sua resposta</label><input id="typedAnswer" type="text" autocomplete="off" placeholder="Ex.: banheiro; largura 1,5, comprimento 3,20, altura 2,50"><button class="alt" type="button" onclick="submitTyped()">Enviar resposta</button>
+</div>
+</main>
+
+<script>
+let city='Chapecó/SC',room='Banheiro',know=true,area=null,scope='',quality=1,qname='Padrão';
+function hideAll(){document.querySelectorAll('section').forEach(x=>x.classList.add('hidden'))}
+function go(n){hideAll();document.getElementById('s'+n).classList.remove('hidden');step=n;window.scrollTo(0,0);updateAssist()}
+function showCity(){document.getElementById('cityBox').classList.remove('hidden')}
+function saveCity(){let v=document.getElementById('cityInput').value.trim();if(!v)return alert('Digite a cidade.');city=v;go(2)}
+let dims={c:null,l:null,a:null},pendingDims=null;
+function fmtM(v){return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:2})+' m'}
+function saveDimsValues(d){dims=d;area=d.c*d.l;window.h=d.a;go(5)}
+function confirmDims(){if(!pendingDims)return go(4);saveDimsValues(pendingDims);pendingDims=null}
+function submitDimsFree(){const e=document.getElementById('dimFree');parseAndPreviewDims(e.value)}
+function finish(){
+ let floor=area||5;
+ let mult=scope==='Completa'?1:scope==='Piso e paredes'?.72:.48;
+ let baseMat=floor*720*quality*mult;
+ let baseLab=floor*520*mult;
+ let reserve=(baseMat+baseLab)*.08;
+ let total=baseMat+baseLab+reserve;
+ let conf=know&&qname!=='Não sei'?'Alta':'Média';
+ document.getElementById('rCity').textContent=city;
+ document.getElementById('rTotal').textContent=total.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+ document.getElementById('rConf').textContent='Confiança: '+conf;
+ document.getElementById('rExplain').innerHTML='<b>Base piloto:</b> Chapecó/SC • setembro/2026. Esta versão serve para testar a experiência. Os preços automáticos de lojas ainda não estão conectados.';
+ go(7);
+}
+function resetAll(){city='Chapecó/SC';room='Banheiro';know=true;area=null;scope='';quality=1;qname='Padrão';dims={c:null,l:null,a:null};pendingDims=null;mode=null;go(0)}
+let mode=null,step=0,recognition=null;
+let longVoiceActive=false,longVoiceBuffer='',longVoiceUntil=0,longVoiceRestartTimer=null;
+const questions={1:'Em que cidade será a reforma? Diga Chapecó ou fale o nome da cidade.',2:'O que você quer reformar? Nesta versão, banheiro.',3:'Você sabe as medidas? Diga sei ou não sei.',31:'Qual o tamanho aproximado do piso? Pequeno, médio ou maior.',4:'Pode falar as medidas do seu jeito e em qualquer ordem. Fale devagar. Você pode fazer pausas para pensar e continuar. Quando terminar, diga pronto. Por exemplo: três metros de comprimento, dois metros e cinquenta de altura e um metro e meio de largura.',41:'Confira as medidas que eu entendi. Se estiver certo, diga sim. Se alguma estiver errada, fale a correção naturalmente, por exemplo: a altura é dois e sessenta.',5:'Que tipo de reforma? Completa, piso e paredes ou só acabamento.',6:'Qual padrão? Econômico, padrão, superior ou não sei.',7:'A estimativa está na tela. Você pode começar de novo.'};
+function startMode(m){mode=m;go(1)}
+function toggleMode(){mode=mode==='voice'?'touch':'voice';updateAssist()}
+function updateAssist(){
+ const box=document.getElementById('assist');box.classList.toggle('hidden',!mode||step===0);
+ if(!mode||step===0)return;
+ document.getElementById('promptText').textContent=questions[step]||'';
+ document.getElementById('modeBtn').textContent=mode==='voice'?'Usar texto e toques':'Usar voz';
+ document.getElementById('listenBtn').classList.toggle('hidden',mode!=='voice');
+ document.getElementById('micHelp').classList.add('hidden');
+ document.getElementById('voiceStatus').classList.add('hidden');
+ document.getElementById('typedAnswer').value='';
+ if(mode==='voice')speak(questions[step]);
+}
+function speak(s){if(!('speechSynthesis' in window))return; speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(s);u.lang='pt-BR';u.rate=.92;speechSynthesis.speak(u)}
+function status(s){const e=document.getElementById('voiceStatus');e.textContent=s;e.classList.remove('hidden')}
+function micHelp(s){status(s);document.getElementById('micHelp').classList.remove('hidden')}
+function stopLongVoice(){
+ longVoiceActive=false;
+ if(longVoiceRestartTimer){clearTimeout(longVoiceRestartTimer);longVoiceRestartTimer=null}
+}
+function finishLongVoice(){
+ const answer=longVoiceBuffer.replace(/\bpronto\b/ig,'').replace(/\s+/g,' ').trim();
+ stopLongVoice();
+ if(!answer){status('Não ouvi as medidas. Toque no microfone e fale com calma.');return}
+ status('Entendi: '+answer);
+ document.getElementById('dimFree').value=answer;
+ parseAndPreviewDims(answer);
+}
+function startRecognitionCycle(R){
+ try{
+  if(recognition)recognition.abort();
+  speechSynthesis.cancel();
+  recognition=new R();
+  recognition.lang='pt-BR';
+  recognition.interimResults=false;
+  recognition.maxAlternatives=1;
+  document.getElementById('micHelp').classList.add('hidden');
+
+  recognition.onresult=e=>{
+   const part=e.results[e.results.length-1][0].transcript.trim();
+   if(step===4 && longVoiceActive){
+    longVoiceBuffer=(longVoiceBuffer+' '+part).trim();
+    longVoiceUntil=Math.max(longVoiceUntil,Date.now()+10000);
+    status('Ouvi: '+longVoiceBuffer+' • Pode pensar e continuar. Quando terminar, diga “pronto”.');
+    if(/\bpronto\b/i.test(part)) finishLongVoice();
+   }else{
+    status('Entendi: '+part);
+    handleAnswer(part);
+   }
+  };
+
+  recognition.onerror=e=>{
+   if(e.error==='not-allowed'||e.error==='service-not-allowed'){
+    stopLongVoice();
+    micHelp('O navegador não autorizou o microfone.');
+   }else if(step===4 && longVoiceActive && (e.error==='no-speech'||e.error==='aborted')){
+    // Na etapa de medidas, uma pausa é normal. O onend tenta ouvir novamente.
+   }else{
+    status('Não consegui ouvir. Tente de novo ou escreva a resposta.');
+   }
+  };
+
+  recognition.onend=()=>{
+   if(step===4 && longVoiceActive){
+    if(Date.now()<longVoiceUntil){
+     longVoiceRestartTimer=setTimeout(()=>startRecognitionCycle(R),250);
+    }else{
+     finishLongVoice();
+    }
+   }
+  };
+
+  recognition.onstart=()=>{
+   if(step===4 && longVoiceActive){
+    status('Estou ouvindo. Pode falar devagar, fazer pausas para pensar e continuar. Diga “pronto” quando terminar.');
+   }else{
+    status('Estou ouvindo. Fale sua resposta.');
+   }
+  };
+  recognition.start();
+ }catch(e){
+  stopLongVoice();
+  micHelp('Não foi possível iniciar o microfone nesta página.');
+ }
+}
+function listen(){
+ const R=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!R){micHelp('Este navegador não oferece reconhecimento de voz nesta página.');return}
+ if(step===4){
+  stopLongVoice();
+  longVoiceActive=true;
+  longVoiceBuffer='';
+  longVoiceUntil=Date.now()+25000;
+ }
+ startRecognitionCycle(R);
+}
+function submitTyped(){const e=document.getElementById('typedAnswer');handleAnswer(e.value)}
+function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[;:]/g,',').replace(/\s+/g,' ').trim()}
+const small={zero:0,um:1,uma:1,meio:.5,meia:.5,dois:2,duas:2,tres:3,quatro:4,cinco:5,seis:6,sete:7,oito:8,nove:9,dez:10,onze:11,doze:12,treze:13,catorze:14,quatorze:14,quinze:15,dezesseis:16,dezessete:17,dezoito:18,dezenove:19,vinte:20,trinta:30,quarenta:40,cinquenta:50,sessenta:60,setenta:70,oitenta:80,noventa:90,cento:100};
+function wordsInt(s){
+ s=norm(s).replace(/\be\b/g,' ').trim(); if(!s)return NaN;
+ if(/^\d+(?:[.,]\d+)?$/.test(s))return Number(s.replace(',','.'));
+ let total=0,found=false; for(const w of s.split(' ')){if(small[w]!==undefined){total+=small[w];found=true}}
+ return found?total:NaN
+}
+function measureValue(fragment){
+ let s=norm(fragment).replace(/\b(cerca de|aproximadamente|aprox|mais ou menos)\b/g,' ').trim();
+ let m=s.match(/(\d+)\s*(?:m|metro|metros)\s*e\s*(\d{1,2})\b/);
+ if(m)return Number(m[1])+Number(m[2])/100;
+ m=s.match(/(\d+)\s*(?:m|metro|metros)\s*e\s*(?:meio|meia)\b/);
+ if(m)return Number(m[1])+.5;
+ m=s.match(/\b(um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)\s*(?:metro|metros)\s*e\s*(?:meio|meia)\b/);
+ if(m)return wordsInt(m[1])+.5;
+ m=s.match(/(\d+(?:[.,]\d+)?)\s*(?:m|metro|metros)?\b/);
+ if(m)return Number(m[1].replace(',','.'));
+ m=s.match(/\b([a-z]+(?:\s+e\s+[a-z]+)?)\s+(?:virgula|ponto)\s+([a-z]+(?:\s+e\s+[a-z]+)?)\b/);
+ if(m){const a=wordsInt(m[1]),b=wordsInt(m[2]);if(Number.isFinite(a)&&Number.isFinite(b)){const digits=Math.round(b).toString().length;return a+b/(digits===1?10:100)}}
+ m=s.match(/\b([a-z]+)\s+e\s+([a-z]+)\b/);
+ if(m){const a=wordsInt(m[1]),b=wordsInt(m[2]);if(Number.isFinite(a)&&Number.isFinite(b)&&a>=1&&a<=9&&b>=10&&b<=99)return a+b/100}
+ m=s.match(/\b((?:um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)(?:\s+metros?)?)\b/);
+ if(m)return wordsInt(m[1].replace(/\bmetros?\b/g,''));
+ return NaN
+}
+function labeledValue(s,labelRe){
+ const re=new RegExp('(?:'+labelRe+')\\s*(?:do banheiro|da parede|do piso)?\\s*(?:e|eh|é|=|:|tem|mede|de)?\\s*([^,.;]+)','i');
+ const m=s.match(re); if(m){const v=measureValue(m[1]);if(Number.isFinite(v))return v}
+ const re2=new RegExp('([^,.;]+?)\\s*(?:de\\s+)?(?:'+labelRe+')','i');
+ const m2=s.match(re2); if(m2){const v=measureValue(m2[1]);if(Number.isFinite(v))return v}
+ return NaN
+}
+function extractAllValues(s){
+ const out=[];
+ const re=/\b\d+(?:[.,]\d+)?(?:\s*(?:m|metro|metros))?(?:\s+e\s+(?:\d{1,2}|meio|meia))?|\b(?:um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez)(?:\s+metros?)?(?:\s+e\s+(?:meio|meia|vinte|trinta|quarenta|cinquenta|sessenta|setenta|oitenta|noventa))?\b/g;
+ let m;while((m=re.exec(s))){const v=measureValue(m[0]);if(Number.isFinite(v)&&v>0&&v<20)out.push(v)}
+ return out
+}
+function parseDimensions(raw){
+ const s=norm(raw);
+ let l=labeledValue(s,'largura');
+ let c=labeledValue(s,'comprimento');
+ let a=labeledValue(s,'altura|pe[- ]?direito');
+ const vals=extractAllValues(s);
+ if(!Number.isFinite(a)){
+   const am=s.match(/(\d+(?:[.,]\d+)?|[a-z]+(?:\s+e\s+[a-z]+)?)\s*(?:m|metro|metros)?\s*(?:de\s+)?(?:altura|pe[- ]?direito)/);
+   if(am)a=measureValue(am[1]);
+ }
+ const used=[]; [l,c,a].forEach(v=>{if(Number.isFinite(v))used.push(v)});
+ const remaining=vals.slice();
+ used.forEach(v=>{const i=remaining.findIndex(x=>Math.abs(x-v)<.001);if(i>=0)remaining.splice(i,1)});
+ if(!Number.isFinite(a)&&remaining.length>=3){a=remaining.pop()}
+ if(!Number.isFinite(l)&&remaining.length)l=remaining.shift();
+ if(!Number.isFinite(c)&&remaining.length)c=remaining.shift();
+ if(Number.isFinite(a)&&!Number.isFinite(l)&&!Number.isFinite(c)&&remaining.length>=2){l=remaining.shift();c=remaining.shift()}
+ return {c,l,a};
+}
+function parseAndPreviewDims(raw){
+ const d=parseDimensions(raw);
+ if(!(d.c>0&&d.l>0&&d.a>0)){
+   status('Não consegui identificar as três medidas. Fale naturalmente, por exemplo: “largura um metro e meio, altura dois e cinquenta, comprimento três metros e vinte”. Ou toque em “Não sei as medidas”.');
+   return false;
+ }
+ pendingDims=d;
+ document.getElementById('dimConfirm').innerHTML=
+   '<b>Comprimento:</b> '+fmtM(d.c)+
+   '<br><b>Largura:</b> '+fmtM(d.l)+
+   '<br><b>Altura:</b> '+fmtM(d.a)+
+   '<br><span style="font-size:13px">A ordem em que você falou não importa.</span>';
+ go(41); return true;
+}
+
+function applyDimCorrection(raw){
+  if(!pendingDims)return false;
+  const s=norm(raw);
+  let changed=false;
+  const nl=labeledValue(s,'largura');
+  const nc=labeledValue(s,'comprimento');
+  const na=labeledValue(s,'altura|pe[- ]?direito');
+  if(Number.isFinite(nl)){pendingDims.l=nl;changed=true}
+  if(Number.isFinite(nc)){pendingDims.c=nc;changed=true}
+  if(Number.isFinite(na)){pendingDims.a=na;changed=true}
+  if(changed){
+    document.getElementById('dimConfirm').innerHTML=
+      '<b>Comprimento:</b> '+fmtM(pendingDims.c)+
+      '<br><b>Largura:</b> '+fmtM(pendingDims.l)+
+      '<br><b>Altura:</b> '+fmtM(pendingDims.a)+
+      '<br><span style="font-size:13px">Pode dizer “sim” para continuar ou corrigir outra medida.</span>';
+    status('Atualizei a medida. Confira e diga “sim” se agora estiver certo.');
+    return true;
+  }
+  return false;
+}
+
+function handleAnswer(raw){
+  const s=norm(raw);if(!s){status('Escreva ou fale uma resposta.');return}
+  if(step===1){city=s.includes('chapeco')?'Chapecó/SC':raw.trim();go(2)}
+  else if(step===2){if(s.includes('banheiro')){room='Banheiro';go(3)}else status('Nesta versão só o banheiro está disponível. Diga banheiro.')}
+  else if(step===3){know=!s.includes('nao');go(know?4:31)}
+  else if(step===31){area=s.includes('pequen')?3:s.includes('medio')?5:s.includes('maior')||s.includes('grande')?7:null;if(area)go(5);else status('Diga pequeno, médio ou maior.')}
+  else if(step===4){document.getElementById('dimFree').value=raw;parseAndPreviewDims(raw)}
+  else if(step===41){
+    if(s.includes('sim')||s.includes('certo')||s.includes('correto')||s.includes('isso'))confirmDims();
+    else if(applyDimCorrection(raw)){}
+    else if(s.includes('nao')||s.includes('corrig')||s.includes('errado'))go(4);
+    else status('Diga “sim” se estiver certo ou fale a correção, por exemplo: “a largura é 1,80”.');
+  }
+ else if(step===5){scope=s.includes('completa')?'Completa':s.includes('parede')?'Piso e paredes':s.includes('acabamento')?'Só acabamento':'';if(scope)go(6);else status('Diga completa, piso e paredes ou só acabamento.')}
+ else if(step===6){qname=s.includes('econom')?'Econômico':s.includes('superior')?'Superior':s.includes('nao sei')?'Não sei':s.includes('padrao')?'Padrão':'';if(!qname){status('Diga econômico, padrão, superior ou não sei.');return}quality=qname==='Econômico'?.82:qname==='Superior'?1.55:1;finish()}
+ else if(step===7){if(s.includes('novo')||s.includes('comec'))resetAll();else status('Toque em começar de novo se quiser refazer o planejamento.')}
+}
+document.getElementById('typedAnswer').addEventListener('keydown',e=>{if(e.key==='Enter')submitTyped()});
+document.getElementById('dimFree').addEventListener('keydown',e=>{if(e.key==='Enter')submitDimsFree()});
+</script>
+</body>
+</html>
